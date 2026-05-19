@@ -1,15 +1,20 @@
-name: 编译 Android APK
+name: 编译 Android 子目录 APK
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
-  push:
-    branches: [ main ]  # 推送到 main 分支时自动编译
   workflow_dispatch:    # 允许手动点击编译
+  push:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android  # 关键：所有命令都在 android 目录执行
+
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
@@ -20,15 +25,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
+          cache-dependency-path: android/build.gradle
 
-      - name: 赋予 Gradle 执行权限
+      - name: 给 gradlew 加执行权限
         run: chmod +x gradlew
 
       - name: 编译 Debug 版 APK
         run: ./gradlew assembleDebug
 
-      - name: 上传编译好的 APK
+      - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: android-apk
+          path: android/app/build/outputs/apk/debug/*.apk
